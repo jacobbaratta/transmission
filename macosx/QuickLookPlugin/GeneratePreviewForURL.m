@@ -67,7 +67,15 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     const NSUInteger width = 32;
     [htmlString appendFormat: @"<h2><img class=\"icon\" src=\"%@\" width=\"%ld\" height=\"%ld\" />%@</h2>", generateIconData(fileTypeString, width, allImgProps), width, width, name];
 
-    NSString * fileSizeString = [NSString stringForFileSize: inf.totalSize];
+
+    //NSString * hashString = inf.hashString ? [NSString stringWithUTF8String: inf.hashString] : nil;
+    NSString * hashString = [NSString stringWithUTF8String: inf.hashString];
+    [htmlString appendFormat: @"<p>%@</p>", hashString];
+
+
+    NSString * fileSizeStringBase10 = [NSString stringForFileSize: inf.totalSize];
+    NSString * fileSizeStringBase2 = [NSString stringForMemorySize: inf.totalSize];
+    NSString * fileSizeString = nil;
     if (inf.isFolder)
     {
         NSString * fileCountString;
@@ -75,7 +83,11 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
             fileCountString = NSLocalizedStringFromTableInBundle(@"1 file", nil, bundle, "quicklook file count");
         else
             fileCountString= [NSString stringWithFormat: NSLocalizedStringFromTableInBundle(@"%@ files", nil, bundle, "quicklook file count"), [NSString formattedUInteger: inf.fileCount]];
-        fileSizeString = [NSString stringWithFormat: @"%@, %@", fileCountString, fileSizeString];
+        fileSizeString = [NSString stringWithFormat: @"%@, %@ (%@)", fileCountString, fileSizeStringBase2, fileSizeStringBase10];
+    }
+    else
+    {
+        fileSizeString = [NSString stringWithFormat: @"1 file, %@ (%@)", fileSizeStringBase2, fileSizeStringBase10];
     }
     [htmlString appendFormat: @"<p>%@</p>", fileSizeString];
 
@@ -92,6 +104,41 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     if (creationString)
         [htmlString appendFormat: @"<p>%@</p>", creationString];
 
+    
+
+    //NSString * pieceCount = inf.pieceCount ? [NSString formattedUInteger: inf.pieceCount] : nil;
+    NSString * pieceCount = [NSString formattedUInteger: inf.pieceCount];
+    NSString * pieceSizeFile = [NSString stringForFileSize: inf.pieceSize];
+    NSString * pieceSizeMemory = [NSString stringForMemorySize: inf.pieceSize];
+
+    NSString * fileChunksString = [NSString stringWithFormat: @"Pieces: %@ × %@ (%@)", pieceCount, pieceSizeMemory, pieceSizeFile];
+
+    [htmlString appendFormat: @"<p>%@</p>", fileChunksString];
+
+
+
+    if (inf.isPrivate) {
+        [htmlString appendString: @"<p>Privacy: <b>Private</b> torrent</p>"];
+    } else {
+        [htmlString appendString: @"<p>Privacy: Public torrent</p>"];
+    }
+
+    //NSString * torrentPrivacy = inf.isPrivate ? [htmlString appendString: @"<p>Private torrent</p>"] : [htmlString appendString: @"<p>Public torrent</p>"];
+
+
+
+    //NSString * creatorString = inf.creator ? [NSString stringWithUTF8String: inf.creator] : nil;
+
+    // Technically this really needs to be localized with NSLocalizedStringFromTableInBundle like the others above and set up in localizable.strings but who has time for that?
+
+    if (inf.sourceFlag)
+    {
+        NSString * sourceFlag = [NSString stringWithUTF8String: inf.sourceFlag];
+        if (![sourceFlag isEqualToString: @""])
+            [htmlString appendFormat: @"<p>Source Flag: %@</p>", sourceFlag];
+    }
+
+
     if (inf.comment)
     {
         NSString * comment = [NSString stringWithUTF8String: inf.comment];
@@ -104,7 +151,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     if (inf.webseedCount > 0)
     {
         NSMutableString * listSection = [NSMutableString string];
-        [listSection appendString: @"<table>"];
+        [listSection appendString: @"<table class=\"smaller-text\">"];
 
         NSString * headerTitleString = inf.webseedCount == 1 ? NSLocalizedStringFromTableInBundle(@"1 Web Seed", nil, bundle, "quicklook web seed header") : [NSString stringWithFormat: NSLocalizedStringFromTableInBundle(@"%@ Web Seeds", nil, bundle, "quicklook web seed header"), [NSString formattedUInteger: inf.webseedCount]];
         [listSection appendFormat: @"<tr><th>%@</th></tr>", headerTitleString];
@@ -120,7 +167,7 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     if (inf.trackerCount > 0)
     {
         NSMutableString * listSection = [NSMutableString string];
-        [listSection appendString: @"<table>"];
+        [listSection appendString: @"<table class=\"smaller-text\">"];
 
         NSString * headerTitleString = inf.trackerCount == 1 ? NSLocalizedStringFromTableInBundle(@"1 Tracker", nil, bundle, "quicklook tracker header") : [NSString stringWithFormat: NSLocalizedStringFromTableInBundle(@"%@ Trackers", nil, bundle, "quicklook tracker header"), [NSString formattedUInteger: inf.trackerCount]];
         [listSection appendFormat: @"<tr><th>%@</th></tr>", headerTitleString];
@@ -147,12 +194,15 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
         for (int i = 0; i < inf.fileCount; ++i)
         {
             NSString * fullFilePath = [NSString stringWithUTF8String: inf.files[i].name];
+            NSString * thisFileSizeString = [NSString stringForMemorySize: inf.files[i].length];
+            NSString * thisFileSizeString10 = [NSString stringForFileSize: inf.files[i].length];
+
             NSCAssert([fullFilePath hasPrefix: [name stringByAppendingString: @"/"]], @"Expected file path %@ to begin with %@/", fullFilePath, name);
 
             NSString * shortenedFilePath = [fullFilePath substringFromIndex: [name length]+1];
 
             const NSUInteger width = 16;
-            [listSection appendFormat: @"<tr><td><img class=\"icon\" src=\"%@\" width=\"%ld\" height=\"%ld\" />%@<td></tr>", generateIconData([shortenedFilePath pathExtension], width, allImgProps), width, width, shortenedFilePath];
+            [listSection appendFormat: @"<tr><td><img class=\"icon\" src=\"%@\" width=\"%ld\" height=\"%ld\" />%@ (%@/%@)<td></tr>", generateIconData([shortenedFilePath pathExtension], width, allImgProps), width, width, shortenedFilePath, thisFileSizeString, thisFileSizeString10];
         }
 
         [listSection appendString:@"</table>"];
@@ -161,7 +211,8 @@ OSStatus GeneratePreviewForURL(void *thisInterface, QLPreviewRequestRef preview,
     }
 
     if ([lists count] > 0)
-        [htmlString appendFormat: @"<hr/><br>%@", [lists componentsJoinedByString: @"<br>"]];
+        [htmlString appendFormat: @"<hr/>%@", [lists componentsJoinedByString: @"<br>"]];
+        //[htmlString appendFormat: @"<hr/><br>%@", [lists componentsJoinedByString: @"<br>"]];
 
     [htmlString appendString: @"</body></html>"];
 

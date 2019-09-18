@@ -58,6 +58,11 @@
     return [NSByteCountFormatter stringFromByteCount: size countStyle: NSByteCountFormatterCountStyleFile];
 }
 
++ (NSString *) stringForMemorySize: (uint64_t) size
+{
+    return [NSByteCountFormatter stringFromByteCount: size countStyle: NSByteCountFormatterCountStyleMemory];
+}
+
 #warning should we take long long instead?
 + (NSString *) stringForFilePartialSize: (uint64_t) partialSize fullSize: (uint64_t) fullSize
 {

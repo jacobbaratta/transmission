@@ -1,22 +1,29 @@
-html
-{
+html {
 	color: rgb(0,0,0);
-	font-family:'Lucida Grande';
-    text-align:left;
+	font-family: 'Lucida Grande';
+	text-align: left;
 }
-th
-{
+table.smaller-text {
+	font-size: 14px;
+}
+th {
 	color: rgb(50,50,50);
 	font-weight: bold;
-    text-align:left;
+	text-align: left;
 }
-td
-{
+td {
 	color: rgb(80,80,80);
-    text-align:left; 
+	text-align: left;
 }
-img.icon
-{
-    vertical-align:text-bottom;
-    margin-right:8px;
+img.icon {
+	vertical-align: text-bottom;
+	margin-right: 8px;
+}
+p {
+	font-size: 12px;
+	margin-top: 1px;
+	margin-bottom: 1px;
+}
+h2 {
+	margin-bottom: 2px;
 }
