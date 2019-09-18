@@ -146,6 +146,11 @@ static void showInfo(tr_info const* inf)
     printf("  Total Size: %s\n", tr_formatter_size_B(buf, inf->totalSize, sizeof(buf)));
     printf("  Privacy: %s\n", inf->isPrivate ? "Private torrent" : "Public torrent");
 
+    if (inf->sourceFlag != NULL && *inf->sourceFlag != '\0')
+    {
+        printf("  Source Flag: %s\n", inf->sourceFlag);
+    }
+
     /**
     ***  Trackers
     **/
